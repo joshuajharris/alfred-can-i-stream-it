@@ -1,4 +1,4 @@
-# Can I Stream It Workflow
+# Can I Stream It Workflow [(Download)](https://github.com/joshuajharris/alfred-can-i-stream-it/raw/master/alfred-can-i-stream-it.alfredworkflow)
 --------------
 Because you can't be lazy, without being lazy.
 
