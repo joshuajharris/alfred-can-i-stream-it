@@ -3,38 +3,40 @@
 
 import sys
 
-from workflow import Workflow, ICON_WEB, web
+from workflow import Workflow, ICON_WEB, ICON_INFO, web
 
+__version__ = 'v1.0.0'
+
+GITHUB_SLUG = 'joshuajharris/alfred-can-i-stream-it'
+UPDATE_SETTINGS = {
+    'github_slug': GITHUB_SLUG,
+    'version': __version__
+}
+
+SERVICES_URL = 'http://www.canistream.it/services'
+
+def getJSON(url, params):
+    r = web.get(url, params)
+    r.raise_for_status()
+    return r.json()
+
+def search(query):
+    url = SERVICES_URL + '/search'
+    params = dict(movieName=query)
+
+    return getJSON(url, params)
+
+def stream(movieId):
+    url = SERVICES_URL + '/query'
+    params = dict(movieId=movieId, attributes='1', mediaType='streaming')
 
 def main(wf):
+    # If query is set strip white space at ends
+    # If not, set to "None"
+    query =  wf.args[0].strip() if len(wf.args) else None
 
-    if wf.update_available:
-        wf.add_item("An update is available!",
-                    autocomplete='workflow:update', valid=False)
-    # The Workflow instance will be passed to the function
-    # you call from `Workflow.run`. Not so useful, as
-    # the `wf` object created in `if __name__ ...` below is global.
-    #
-    # Your imports go here if you want to catch import errors (not a bad idea)
-    # or if the modules/packages are in a directory added via `Workflow(libraries=...)`
-
-    # Get args from Workflow, already in normalized Unicode
-    # Get query from Alfred
-    if len(wf.args):
-        query = wf.args[0]
-    else:
-        query = None
-
-    # params = dict(movieId='4eb04794f5f8077d1d000000', attributes='1', mediaType='streaming')
-    # url = 'http://www.canistream.it/services/query'
-    params = dict(movieName=query)
-    url = 'http://www.canistream.it/services/search'
-
-    r = web.get(url, params)
-
-    r.raise_for_status()
-
-    results = r.json()
+    if query is not None:
+        results = search(query)
 
     if len(results) > 0:
         for movie in results:
@@ -53,15 +55,17 @@ def main(wf):
     # any more...
     wf.send_feedback()
 
-
 if __name__ == '__main__':
     # Create a global `Workflow` object
-    wf = Workflow()
-                #   update_settings={
-                #       'github_slug': '',
-                #       'version': 'v1.0.0'
-                #   })
+    wf = Workflow(update_settings=UPDATE_SETTINGS)
     # Call your entry function via `Workflow.run()` to enable its helper
     # functions, like exception catching, ARGV normalization, magic
     # arguments etc.
+    if wf.update_available:
+        # Add a notification to top of Script Filter results
+        wf.add_item('New version available',
+                    'Action this item to install the update',
+                    autocomplete='workflow:update',
+                    icon=ICON_INFO)
+
     sys.exit(wf.run(main))
